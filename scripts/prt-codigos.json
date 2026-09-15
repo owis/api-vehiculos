@@ -1,0 +1,7 @@
+{
+  "version": "ene-2026",
+  "source": "https://www.prt.cl/Descargas/ (Códigos_SGPRT.xlsx aún no fijado: ver prt-diccionarios.md)",
+  "nota": "Sin el diccionario oficial Códigos_SGPRT.xlsx no se inventan significados: todo código sin entrada mapea a null en el contrato (spec PRT Field Mapping).",
+  "combustible": {},
+  "servicio_a_tipo": {}
+}

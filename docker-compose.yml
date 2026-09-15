@@ -1,0 +1,30 @@
+# api-vehiculos standalone — lo usa OpenShip (proyecto api-vehiculos).
+# Se conecta a la BD del stack bit por la red externa infra_bit-net (DB_HOST=db).
+name: api-vehiculos
+services:
+  api-vehiculos:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: os-api-vehiculos
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      API_VEHICULOS_PORT: ${API_VEHICULOS_PORT:-3100}
+      API_VEHICULOS_API_KEY: ${API_VEHICULOS_API_KEY}
+      DB_HOST: ${DB_HOST:-db}
+      DB_PORT: ${DB_PORT:-3306}
+      DB_NAME: ${API_VEHICULOS_DB_NAME:-api_vehiculos}
+      DB_USER: ${DB_USER:-bit}
+      DB_PASSWORD: ${DB_PASSWORD}
+      API_VEHICULOS_CACHE_TTL_DAYS: ${API_VEHICULOS_CACHE_TTL_DAYS:-30}
+      PRT_BASE_URL: ${PRT_BASE_URL:-https://www.prt.cl/Descargas/docs/2026/1.Enero}
+    ports:
+      - "${API_VEHICULOS_PORT_HOST:-3100}:3100"
+    networks:
+      - bit-net
+
+networks:
+  bit-net:
+    external: true
+    name: bit-network
