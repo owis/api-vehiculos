@@ -21,11 +21,12 @@
 //   NUM_CERTIFICADO FEC_REVISION FEC_VENCIMIENTO RESULTADO_CRT
 //   COD_COMBUSTIBLE COD_SERVICIO COD_VEHICULO COD_PRT(planta) + periodo YYYYMM.
 import 'dotenv/config';
-import { createWriteStream, existsSync, mkdirSync } from 'node:fs';
+import { createReadStream, createWriteStream, existsSync, mkdirSync } from 'node:fs';
 import { unlink } from 'node:fs/promises';
 import { once } from 'node:events';
 import { pipeline } from 'node:stream/promises';
-import { get as httpsGet } from 'node:https';
+import https, { get as httpsGet } from 'node:https';
+const httpsAgent = https.Agent;
 import { get as httpGet } from 'node:http';
 import { basename, join } from 'node:path';
 import mysql from 'mysql2/promise';
@@ -350,9 +351,10 @@ export async function ingestWorkbook(xlsxPath, { periodo, batchSize = 1000, sink
 }
 
 function downloadFile(url, destPath) {
+  const agent = url.startsWith('https:') ? new httpsAgent({ rejectUnauthorized: false }) : undefined;
   const getter = url.startsWith('https:') ? httpsGet : httpGet;
   return new Promise((resolve, reject) => {
-    getter(url, (res) => {
+    getter(url, { agent }, (res) => {
       if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
         res.resume();
         downloadFile(new URL(res.headers.location, url).toString(), destPath).then(resolve, reject);
@@ -559,6 +561,7 @@ async function main() {
     password: process.env.DB_PASSWORD || 'bit',
     waitForConnections: true,
     connectionLimit: 2,
+    infileStreamFactory: (path) => createReadStream(path),
     dateStrings: true,
   });
   const t0 = Date.now();
