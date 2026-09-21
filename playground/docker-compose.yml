@@ -1,0 +1,25 @@
+# api-vehiculos-playground — servidor estático de prueba para la API de vehículos.
+# Montado en OpenShip como proyecto independiente (proj_uM4f1MQBXAZ5FoK1).
+name: api-vehiculos-playground
+services:
+  playground:
+    build:
+      context: .
+      dockerfile: Dockerfile.playground
+    container_name: api-vehiculos-playground
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PLAYGROUND_PORT: ${PLAYGROUND_PORT:-3001}
+      API_VEHICULOS_URL: ${API_VEHICULOS_URL:-http://os-api-vehiculos:3100}
+      API_VEHICULOS_API_KEY: ${API_VEHICULOS_API_KEY}
+    ports:
+      - "${PLAYGROUND_PORT_HOST:-3001}:3001"
+    networks:
+      - av-net
+
+networks:
+  # Red del stack api-vehiculos (os-api-vehiculos vive ahí desde 2026-09-21).
+  av-net:
+    external: true
+    name: api-vehiculos_default

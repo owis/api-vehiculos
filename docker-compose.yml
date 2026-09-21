@@ -1,7 +1,29 @@
-# api-vehiculos standalone — lo usa OpenShip (proyecto api-vehiculos).
-# Se conecta a la BD del stack bit por la red externa infra_bit-net (DB_HOST=db).
+# api-vehiculos standalone — stack propio (db + api), sin dependencia de bit.
+# El volumen av_mysql_data contiene el histórico api_vehiculos (migrado del
+# stack bit el 2026-09-21; el esquema bit vive en openship-bit-db).
 name: api-vehiculos
 services:
+  # ============================================
+  # MySQL 8 — solo esquema api_vehiculos
+  # ============================================
+  db:
+    image: mysql:8.0
+    container_name: av-db
+    restart: unless-stopped
+    # El volumen ya existe con datos: estas vars solo aplican a un init fresco.
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-}
+      MYSQL_DATABASE: ${API_VEHICULOS_DB_NAME:-api_vehiculos}
+      MYSQL_USER: ${DB_USER:-bit}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-}
+    volumes:
+      - av_mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   api-vehiculos:
     build:
       context: .
@@ -21,10 +43,14 @@ services:
       PRT_BASE_URL: ${PRT_BASE_URL:-https://www.prt.cl/Descargas/docs/2026/1.Enero}
     ports:
       - "${API_VEHICULOS_PORT_HOST:-3100}:3100"
-    networks:
-      - bit-net
+    depends_on:
+      db:
+        condition: service_healthy
+    # Red default del proyecto (misma que db): DB_HOST=db resuelve a av-db.
 
-networks:
-  bit-net:
+volumes:
+  # Ex-volumen infra_mysql_data del stack bit: solo api_vehiculos
+  # (el esquema bit se mudó a openship-bit-db el 2026-09-21).
+  av_mysql_data:
     external: true
-    name: bit-network
+    name: infra_mysql_data
